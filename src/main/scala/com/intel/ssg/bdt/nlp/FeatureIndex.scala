@@ -215,7 +215,7 @@ private[nlp] class FeatureIndex extends Serializable {
     require(tokensSizeCollect.length == 1,
       "The number of columns should be fixed in each token!")
     tokensSize = tokensSizeCollect.head
-    labels = features.flatMap(_.labels).distinct().collect().to[ArrayBuffer]
+    labels = features.flatMap(_.labels.distinct).distinct().collect().to[ArrayBuffer]
   }
 
   def buildDictionaryDist(taggers: RDD[Tagger],  bcFeatureIdxI: Broadcast[FeatureIndex], freq: Int) {
