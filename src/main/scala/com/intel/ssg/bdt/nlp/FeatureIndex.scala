@@ -43,14 +43,14 @@ private[nlp] class FeatureIndex extends Serializable {
     alpha
   }
   
-  def openTagSet(sentence: Sequence): FeatureIndex = {
+  def openTagSet(sentence: Sequence) = {
     val tokenNum = sentence.toArray.map(_.tags.length).distinct
     require(tokenNum.length == 1,
       "The number of columns should be fixed in each token!")
 
     labels.appendAll(sentence.toArray.map(_.label))
     tokensSize = tokenNum.head
-    this
+    (labels, tokensSize)
   }
 
   /**
@@ -210,12 +210,12 @@ private[nlp] class FeatureIndex extends Serializable {
   }
 
   def openTagSetDist(trains: RDD[Sequence]) {
-    val features: RDD[FeatureIndex] = trains.map(new FeatureIndex().openTagSet)
-    val tokensSizeCollect = features.map(_.tokensSize).distinct().collect()
+    val features = trains.map(openTagSet)
+    val tokensSizeCollect = features.map(_._2).distinct().collect()
     require(tokensSizeCollect.length == 1,
       "The number of columns should be fixed in each token!")
     tokensSize = tokensSizeCollect.head
-    labels = features.flatMap(_.labels.distinct).distinct().collect().to[ArrayBuffer]
+    labels = features.flatMap(_._1.distinct).distinct().collect().to[ArrayBuffer]
   }
 
   def buildDictionaryDist(taggers: RDD[Tagger],  bcFeatureIdxI: Broadcast[FeatureIndex], freq: Int) {

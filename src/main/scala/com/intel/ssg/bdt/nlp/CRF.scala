@@ -79,17 +79,14 @@ class CRF private (
     featureIdx.openTemplate(template)
     featureIdx.openTagSetDist(trains)
 
-    val bcFeatureIdxI: Broadcast[FeatureIndex] = trains.context.broadcast(featureIdx)
-    val taggers = trains.map(train => {
-      val tagger: Tagger = new Tagger(bcFeatureIdxI.value.labels.size, LearnMode)
-      tagger.read(train, bcFeatureIdxI.value)
-      tagger
-    })
+    val bcFeatureIdxI = trains.context.broadcast(featureIdx)
+    val taggers = trains
+      .map(new Tagger(bcFeatureIdxI.value.labels.size, LearnMode).read(_, bcFeatureIdxI.value))
 
     featureIdx.buildDictionaryDist(taggers, bcFeatureIdxI, freq)
 
     val bcFeatureIdxII = trains.context.broadcast(featureIdx)
-    val taggerList: RDD[Tagger] = taggers.map(bcFeatureIdxII.value.buildFeatures).cache()
+    val taggerList: RDD[Tagger] = taggers.map(bcFeatureIdxII.value.buildFeatures(_)).cache()
 
     val model = runAlgorithm(taggerList, featureIdx)
     taggerList.unpersist()

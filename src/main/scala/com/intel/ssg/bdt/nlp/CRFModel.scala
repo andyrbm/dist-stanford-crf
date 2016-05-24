@@ -80,14 +80,17 @@ case class CRFModel (
     * @return Source files with the predictive labels
     */
   def predict(tests: RDD[Sequence]): RDD[Sequence] = {
+    val deFeatureIdx = new FeatureIndex()
+    deFeatureIdx.readModel(this)
     val bcModel = tests.context.broadcast(this)
-    tests.map { test =>
-      bcModel.value.testCRF(test, costFactor, verboseMode)
-    }
+    val bcFeature = tests.context.broadcast(deFeatureIdx)
+    tests.map(bcModel.value.testCRF(_, bcFeature.value))
   }
 
   def predict(tests: Array[Sequence]): Array[Sequence] = {
-    tests.map(this.testCRF(_, costFactor, verboseMode))
+    val deFeatureIdx = new FeatureIndex()
+    deFeatureIdx.readModel(this)
+    tests.map(testCRF(_, deFeatureIdx))
   }
   /**
     * Internal method to test the CRF model
@@ -95,24 +98,21 @@ case class CRFModel (
     * @param test the sequence to be tested
     * @return the sequence along with predictive labels
     */
-  def testCRF(test: Sequence,
-              costFactor: Double, vMode: Option[VerboseMode]): Sequence = {
-    val deFeatureIdx = new FeatureIndex()
-    deFeatureIdx.readModel(this)
+  def testCRF(test: Sequence, deFeatureIdx: FeatureIndex): Sequence = {
     val tagger = new Tagger(deFeatureIdx.labels.size, TestMode)
     tagger.setCostFactor(costFactor)
     tagger.setNBest(nBest)
     tagger.read(test, deFeatureIdx)
     deFeatureIdx.buildFeatures(tagger)
-    tagger.parse(deFeatureIdx.alpha, vMode)
+    tagger.parse(deFeatureIdx.alpha, verboseMode)
     var Seq: Sequence = null
-    if (vMode.isDefined) {
+    if (verboseMode.isDefined) {
       val tokens = new ArrayBuffer[Token]()
       val labels = deFeatureIdx.labels
       val tmp = test.toArray
       for (i <- tmp.indices) {
         val probMat = new ArrayBuffer[(String, Double)]()
-        vMode match {
+        verboseMode match {
           case Some(VerboseLevel1) =>
             probMat.append((labels(tagger.result(i)), tagger.probMatrix(i * labels.length + tagger.result(i))))
           case Some(VerboseLevel2) =>

@@ -63,7 +63,7 @@ private[nlp] class Tagger (
     this
   }
 
-  def read(lines: Sequence, feature_idx: FeatureIndex): Unit = {
+  def read(lines: Sequence, feature_idx: FeatureIndex) = {
     lines.toArray.foreach{ t =>
       mode match {
       case LearnMode =>
@@ -76,6 +76,7 @@ private[nlp] class Tagger (
       }
       result.append(0)
     }
+    this
   }
 
   /**
