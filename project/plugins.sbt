@@ -1,4 +1,4 @@
-addSbtPlugin("org.spark-packages" % "sbt-spark-package" % "0.2.3")
+addSbtPlugin("org.spark-packages" % "sbt-spark-package" % "0.2.4")
 
 resolvers += Classpaths.sbtPluginReleases
 

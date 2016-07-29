@@ -17,15 +17,7 @@
 
 package com.intel.ssg.bdt.nlp
 
-import org.apache.spark.broadcast.Broadcast
 import org.apache.spark.rdd.RDD
-import org.apache.spark.Logging
-
-trait Regularization
-
-case object L1 extends Regularization
-
-case object L2 extends Regularization
 
 /**
  * CRF with support for multiple parallel runs
@@ -36,9 +28,9 @@ class CRF private (
     private var regParam: Double,
     private var maxIterations: Int,
     private var tolerance: Double,
-    private var regularization: Regularization) extends Serializable with Logging {
+    private var regularization: String) extends Serializable {
 
-  def this() = this(freq = 1, regParam = 0.5, maxIterations = 1000, tolerance = 1E-3, regularization = L2)
+  def this() = this(freq = 1, regParam = 0.5, maxIterations = 1000, tolerance = 1E-3, regularization = "L2")
 
   def setRegParam(regParam: Double) = {
     this.regParam = regParam
@@ -60,7 +52,7 @@ class CRF private (
     this
   }
 
-  def setRegularization(regula: Regularization) = {
+  def setRegularization(regula: String) = {
     this.regularization = regula
     this
   }
@@ -103,14 +95,14 @@ class CRF private (
       taggers: RDD[Tagger],
       featureIdx: FeatureIndex): CRFModel = {
 
-    logInfo("Starting CRF Iterations ( sentences: %d, features: %d, labels: %d )"
+    println("Starting CRF Iterations ( sentences: %d, features: %d, labels: %d )"
       .format(taggers.count(), featureIdx.maxID, featureIdx.labels.length))
 
     var updater: UpdaterCRF = null
     regularization match {
-      case L1 =>
+      case "L1" =>
         updater = new L1Updater
-      case L2 =>
+      case "L2" =>
         updater = new L2Updater
       case _ =>
         throw new Exception("only support L1-CRF and L2-CRF now")
@@ -146,7 +138,7 @@ object CRF {
       freq: Int,
       maxIteration: Int,
       eta: Double,
-      regularization: Regularization): CRFModel = {
+      regularization: String): CRFModel = {
     new CRF().setRegParam(regParam)
       .setFreq(freq)
       .setMaxIterations(maxIteration)
@@ -183,7 +175,7 @@ object CRF {
       templates: Array[String],
       train: RDD[Sequence],
       regParam: Double,
-      regularization: Regularization): CRFModel = {
+      regularization: String): CRFModel = {
     new CRF().setRegParam(regParam)
       .setRegularization(regularization)
       .runCRF(templates, train)
@@ -192,7 +184,7 @@ object CRF {
   def train(
       templates: Array[String],
       train: RDD[Sequence],
-      regularization: Regularization): CRFModel = {
+      regularization: String): CRFModel = {
     new CRF().setRegularization(regularization)
       .runCRF(templates, train)
   }

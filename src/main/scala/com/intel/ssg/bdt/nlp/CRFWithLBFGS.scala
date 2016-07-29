@@ -21,7 +21,6 @@ import scala.collection.mutable
 import breeze.optimize.{CachedDiffFunction, DiffFunction, OWLQN => BreezeOWLQN, LBFGS => BreezeLBFGS}
 import breeze.linalg.{DenseVector => BDV, sum => Bsum}
 import org.apache.spark.rdd.RDD
-import org.apache.spark.Logging
 import org.apache.spark.mllib.optimization._
 import org.apache.spark.mllib.linalg.{Vector => SparkVector}
 
@@ -73,7 +72,7 @@ class CRFWithLBFGS(private var gradient: CRFGradient, private var updater: Updat
   }
 }
 
-object CRFWithLBFGS extends Logging {
+object CRFWithLBFGS {
   def runLBFGS(
       data: RDD[Tagger],
       gradient: CRFGradient,
@@ -104,7 +103,7 @@ object CRFWithLBFGS extends Logging {
       state = states.next()
     }
 
-    logInfo("LBFGS.runLBFGS finished after %s iterations. last 10 losses: %s".format(
+    println("LBFGS.runLBFGS finished after %s iterations. last 10 losses: %s".format(
       state.iter, lossHistory.result().takeRight(10).mkString(" -> ")))
     state.x
   }
