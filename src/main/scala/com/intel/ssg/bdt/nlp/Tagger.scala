@@ -241,13 +241,12 @@ private[nlp] class Tagger (
   def calcCost(n: Node, alpha: BDV[Double]): Node = {
     var cd: Double = 0.0
     var idx: Int = n.fVector
-    n.cost = 0.0
 
     while (featureCache(idx) != -1) {
       cd += alpha(featureCache(idx) + n.y)
-      n.cost = cd * costFactor
       idx += 1
     }
+    n.cost = cd * costFactor
 
     n
   }
@@ -255,14 +254,13 @@ private[nlp] class Tagger (
   def calcCost(p: Path, alpha: BDV[Double]): Path = {
     var cd: Double = 0.0
     var idx: Int = p.fVector
-    p.cost = 0.0
 
     while (featureCache(idx) != -1) {
       cd += alpha(featureCache(idx) +
         nodes(p.lNode).y * ySize + nodes(p.rNode).y)
-      p.cost = cd * costFactor
       idx += 1
     }
+    p.cost = cd * costFactor
 
     p
   }
