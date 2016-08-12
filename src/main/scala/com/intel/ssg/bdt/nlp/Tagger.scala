@@ -232,13 +232,12 @@ private[nlp] class Tagger (
 
     rebuildFeatures()
     nodes.foreach { n =>
-      val nn = calcCost(n, alpha)
-      nn.lPath.foreach(calcCost(_, alpha))
-      nn
+      calcCost(n, alpha)
+      n.lPath.foreach(calcCost(_, alpha))
     }
   }
 
-  def calcCost(n: Node, alpha: BDV[Double]): Node = {
+  def calcCost(n: Node, alpha: BDV[Double]) = {
     var cd: Double = 0.0
     var idx: Int = n.fVector
 
@@ -247,11 +246,9 @@ private[nlp] class Tagger (
       idx += 1
     }
     n.cost = cd * costFactor
-
-    n
   }
 
-  def calcCost(p: Path, alpha: BDV[Double]): Path = {
+  def calcCost(p: Path, alpha: BDV[Double]) = {
     var cd: Double = 0.0
     var idx: Int = p.fVector
 
@@ -261,8 +258,6 @@ private[nlp] class Tagger (
       idx += 1
     }
     p.cost = cd * costFactor
-
-    p
   }
 
   def nextNode: Boolean = {
