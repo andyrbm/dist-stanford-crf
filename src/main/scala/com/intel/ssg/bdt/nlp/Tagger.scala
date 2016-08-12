@@ -65,8 +65,9 @@ private[nlp] class Tagger (
 
   def read(lines: Sequence, feature_idx: FeatureIndex) = {
     var i = 0
-    while (i < lines.toArray.length) {
-      val t = lines.toArray(i)
+    val tmpLines = lines.toArray
+    while (i < tmpLines.length) {
+      val t = tmpLines(i)
       mode match {
         case LearnMode =>
           var j = 0
@@ -128,10 +129,10 @@ private[nlp] class Tagger (
       nodes(i).calcAlpha(nodes)
       i += 1
     }
-    i = 0
-    while (i < nodes.reverse.length) {
-      nodes.reverse(i).calcBeta(nodes)
-      i += 1
+    i = nodes.length - 1
+    while (i >= 0) {
+      nodes(i).calcBeta(nodes)
+      i -= 1
     }
     Z = 0.0
     i = 0
@@ -295,15 +296,8 @@ private[nlp] class Tagger (
         j += 1
       }
       i += 1
-      nn
     }
 
-    i = 0
-    while (i < nodes.length) {
-      val nn = calcCost(nodes(i), alpha)
-      i += 1
-      nn
-    }
   }
 
   def calcCost(n: Node, alpha: BDV[Double]): Node = {
