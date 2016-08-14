@@ -309,7 +309,6 @@ private[nlp] class Tagger (
       idx += 1
     }
     n.cost = cd * costFactor
-
   }
 
   def calcCost(p: Path, alpha: BDV[Double]) = {
@@ -322,7 +321,6 @@ private[nlp] class Tagger (
       idx += 1
     }
     p.cost = cd * costFactor
-
   }
 
   def nextNode: Boolean = {
