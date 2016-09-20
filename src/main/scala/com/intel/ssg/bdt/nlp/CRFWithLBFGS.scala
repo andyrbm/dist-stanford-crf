@@ -118,14 +118,8 @@ class CRFGradient extends Gradient {
     throw new Exception("The original compute() method is not supported")
   }
 
-  def computeCRF(sentences: Iterator[Tagger], weights: BDV[Double]): (BDV[Double], Double) = {
-
-    val expected = BDV.zeros[Double](weights.length)
-    var obj: Double = 0.0
-    while (sentences.hasNext)
-      obj += sentences.next().gradient(expected, weights)
-
-    (expected, obj)
+  def computeCRF(sentences: Tagger, weights: BDV[Double], gradient: BDV[Double]): Double = {
+    sentences.gradient(gradient, weights)
   }
 }
 
@@ -170,14 +164,20 @@ private class CostFun(
   override def calculate(weigths: BDV[Double]): (Double, BDV[Double]) = {
 
     val bcWeights = taggers.context.broadcast(weigths)
+    val n = weigths.length
     lazy val treeDepth = math.ceil(math.log(taggers.partitions.length) / (math.log(2) * 2)).toInt
 
-    val (expected, obj) = taggers.mapPartitions(sentences =>
-      Iterator(gradient.computeCRF(sentences, bcWeights.value))
-    ).treeReduce((p1, p2) => (p1, p2) match {
-      case ((expected1, obj1), (expected2, obj2)) =>
-        (expected1 + expected2, obj1 + obj2)
-    }, treeDepth)
+    val (expected, obj) = taggers.treeAggregate((BDV.zeros[Double](n), 0.0))(
+      seqOp = (c, v) => {
+        // c: (grad, obj), v: (sentence)
+        val l = gradient.computeCRF(v, bcWeights.value, c._1)
+        (c._1, c._2 + l)
+      },
+      combOp = (c1, c2) => {
+        (c1._1 + c2._1, c1._2 + c2._2)
+      }, treeDepth)
+
+    bcWeights.destroy()
 
     val (grad, loss) = updater.asInstanceOf[UpdaterCRF].computeCRF(weigths, expected, regParam)
     (obj + loss, grad)
