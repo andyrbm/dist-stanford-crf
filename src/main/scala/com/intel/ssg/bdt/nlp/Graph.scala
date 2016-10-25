@@ -73,7 +73,7 @@ private[nlp] class Node extends Serializable {
       size: Int,
       featureCache: ArrayBuffer[Int],
       nodes: ArrayBuffer[Node]): Unit = {
-    val c: Double = math.exp(alpha + beta -cost - Z)
+    val c: Double = math.exp(alpha + beta - cost - Z)
 
     var idx: Int = fVector
     while (featureCache(idx) != -1) {
