@@ -38,6 +38,31 @@ private[nlp] class FeatureIndex extends Serializable {
   val BOS = Array("_B-1", "_B-2", "_B-3", "_B-4")
   val EOS = Array("_B+1", "_B+2", "_B+3", "_B+4")
 
+  def initFeatureIndex(features: RDD[Array[Array[Array[Int]]]],
+                       numClasses: Int,
+                       numFeature: Int,
+                       numOfNodeFeature: Int) = {
+    labels.appendAll(new Array[String](numClasses))
+    maxID = numOfNodeFeature * numClasses + (numFeature - numOfNodeFeature) * numClasses * numClasses
+    /*maxID = features.map({docFeature =>
+      var localMaxId = 0
+      docFeature.foreach({ windowFeature =>
+        require(windowFeature.length == 2,
+          "Only window of 2 is supported")
+        var i = 1
+        while(i <= windowFeature.length) {
+          if (i == 1) {
+            localMaxId += windowFeature(i - 1).length * labels.length
+          } else {
+            localMaxId += windowFeature(i - 1).length * labels.length * labels.length
+          }
+          i += 1
+        }
+      })
+      localMaxId
+    }).reduce(_ + _)*/
+  }
+
   def initAlpha() = {
     alpha = BDV.zeros[Double](maxID)
     alpha

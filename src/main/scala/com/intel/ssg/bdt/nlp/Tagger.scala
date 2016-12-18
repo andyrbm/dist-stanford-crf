@@ -53,6 +53,46 @@ private[nlp] class Tagger (
     Ordering.by((_:QueueElement).fx).reverse
   )
 
+  def initTagger(features: Array[Array[Array[Int]]],
+                 goldLabels: Array[Int],
+                 numClasses: Int,
+                 numOfNodeFeatures: Int) = {
+    var i = 0
+    var j = 0
+
+    require(features(0).length <= 2,
+      "only window of 2 is supported now")
+    while (j < features(0).length) {
+      i = 0
+      while (i < goldLabels.length) {
+        if (j == 0) {
+          answer += goldLabels(i)
+          result.append(0)
+          x += new Array[String](0)
+        }
+
+        val windowFeature = features(i)(j)
+        var featureOffset = 0
+        var multiple = 0
+        if (j == 0) {
+          featureOffset = 0
+          multiple = numClasses
+        } else {
+          featureOffset = numOfNodeFeatures * numClasses
+          multiple = numClasses * numClasses
+        }
+
+        featureCacheIndex.append(featureCache.length)
+        featureCache.appendAll(windowFeature.map{case d => (d - featureOffset/numClasses)*multiple + featureOffset})
+        featureCache.append(-1)
+
+        i += 1
+      }
+      j+= 1
+    }
+    this
+  }
+
   def setCostFactor(costFactor: Double) = {
     this.costFactor = costFactor
     this
