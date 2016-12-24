@@ -96,7 +96,7 @@ case class Sequence (sequence: Array[Token]) extends Serializable {
 
   def setCandidates(nBest: ArrayBuffer[Array[Int]],
     probN: ArrayBuffer[Double],
-    labels: ArrayBuffer[String]) = {
+    labels: Array[String]) = {
     for(i <- nBest.indices) {
       val tokens = new ArrayBuffer[Token]()
       for(j <- sequence.indices) {

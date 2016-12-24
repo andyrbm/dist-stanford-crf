@@ -28,11 +28,11 @@ import org.apache.spark.broadcast.Broadcast
 private[nlp] class FeatureIndex extends Serializable {
 
   var maxID = 0
-  var alpha :BDV[Double] = _
+  var alpha: BDV[Double] = _
   var tokensSize = 0
   val unigramTempls = new ArrayBuffer[String]()
   val bigramTempls = new ArrayBuffer[String]()
-  var labels = new ArrayBuffer[String]()
+  var labels: Array[String] = _
   val dic = mutable.HashMap[String, (Int, Int)]()
   val kMaxContextSize = 4
   val BOS = Array("_B-1", "_B-2", "_B-3", "_B-4")
@@ -73,7 +73,7 @@ private[nlp] class FeatureIndex extends Serializable {
     require(tokenNum.length == 1,
       "The number of columns should be fixed in each token!")
 
-    labels.appendAll(sentence.toArray.map(_.label))
+    labels = sentence.toArray.map(_.label)
     tokensSize = tokenNum.head
     (labels, tokensSize)
   }
@@ -184,6 +184,7 @@ private[nlp] class FeatureIndex extends Serializable {
 
   def readModel(models: CRFModel) = {
     val contents: Array[String] = models.head
+    val labelsBuffer = new ArrayBuffer[String]()
     models.dic.foreach{case(k, v) => dic.update(k, (v, 1))}
     alpha = new BDV(models.alpha)
 
@@ -223,7 +224,7 @@ private[nlp] class FeatureIndex extends Serializable {
       } else if (readXSize) {
         tokensSize = contents(i).toInt
       } else if (readLabels) {
-        labels.append(contents(i))
+        labelsBuffer.append(contents(i))
       } else if (readUGrams) {
         unigramTempls.append(contents(i))
       } else if (readBGrams) {
@@ -231,21 +232,17 @@ private[nlp] class FeatureIndex extends Serializable {
       }
       i += 1
     }
+    labels = labelsBuffer.toArray
     this
   }
 
   def openTagSetDist(trains: RDD[Sequence]) {
-    val features = trains.map(openTagSet)
+    val features: RDD[(Array[String], Int)] = trains.map(openTagSet)
     val tokensSizeCollect = features.map(_._2).distinct().collect()
     require(tokensSizeCollect.length == 1,
       "The number of columns should be fixed in each token!")
     tokensSize = tokensSizeCollect.head
-    labels = features
-      .mapPartitions(feature => Iterator(feature.flatMap(_._1.distinct).toArray.distinct))
-      .flatMap(l => l)
-      .distinct()
-      .collect()
-      .to[ArrayBuffer]
+    labels = features.map(_._1.distinct).flatMap(l => l).distinct().collect()
   }
 
   def buildDictionaryDist(taggers: RDD[Tagger],  bcFeatureIdxI: Broadcast[FeatureIndex], freq: Int) {
