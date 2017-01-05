@@ -42,7 +42,7 @@ private[nlp] class FeatureIndex extends Serializable {
                        numClasses: Int,
                        numFeature: Int,
                        numOfNodeFeature: Int) = {
-    labels.appendAll(new Array[String](numClasses))
+    labels = new Array[String](numClasses)
     maxID = numOfNodeFeature * numClasses + (numFeature - numOfNodeFeature) * numClasses * numClasses
     /*maxID = features.map({docFeature =>
       var localMaxId = 0

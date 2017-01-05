@@ -95,12 +95,14 @@ class CRF private (
                numOfNodeFeature: Int): (CRFModel, Array[Double]) = {
     val featureIdx = new FeatureIndex()
     featureIdx.initFeatureIndex(featureData, numClasses, numFeature, numOfNodeFeature)
-    var i = 0
     val labelCount = goldenLabel.count()
     val featureCount = featureData.count()
     require((labelCount == featureCount) && (labelCount > 0),
     "the size check")
-    val taggerList = featureData.zip(goldenLabel).map {case (k,v) => new Tagger(numClasses, LearnMode).initTagger(k, v, numClasses, numOfNodeFeature)}.cache()
+    val indexFeatures = featureData.zipWithIndex().map { case (v, i) => i -> v }
+    val indexLabels = goldenLabel.zipWithIndex().map { case (v, i) => i -> v }
+
+    val taggerList = indexFeatures.join(indexLabels).map {case (k,v) => new Tagger(numClasses, LearnMode).initTagger(v._1, v._2, numClasses, numOfNodeFeature)}.cache()
     val model = runAlgorithm(taggerList, featureIdx)
     taggerList.unpersist()
 
@@ -221,6 +223,6 @@ object CRF {
             numClasses: Int,
             numFeature: Int,
             numOfNodeFeature: Int): (CRFModel, Array[Double]) = {
-    new CRF(1, 0.001, 1000, 1E-4, "L2").runMyCRF(featureData, goldenLabel, numClasses, numFeature, numOfNodeFeature)
+    new CRF().runMyCRF(featureData, goldenLabel, numClasses, numFeature, numOfNodeFeature)
   }
 }
