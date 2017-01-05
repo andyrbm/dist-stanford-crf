@@ -1,3 +1,9 @@
+# Note
+This is experimental code repository which is not ready for trial.
+It augments another github project `CRF-Spark` to implement.
+
+=======
+
 # CRF-Spark
 A Spark-based implementation of Conditional Random Fields (CRFs) for segmenting/labeling sequential data.
 
